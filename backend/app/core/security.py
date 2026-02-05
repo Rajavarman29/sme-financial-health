@@ -30,6 +30,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 ALGORITHM = "HS256"
 
+
 def create_access_token(
     data: dict,
     expires_delta: Optional[timedelta] = None
@@ -47,11 +48,14 @@ def create_access_token(
     encoded_jwt = jwt.encode(
         to_encode,
         settings.SECRET_KEY,
-        algorithm=ALGORITHM
+        algorithm=ALGORITHM,
     )
 
     return encoded_jwt
 
+
+if not settings.ENCRYPTION_KEY:
+    raise RuntimeError("ENCRYPTION_KEY environment variable is not set")
 
 
 fernet = Fernet(settings.ENCRYPTION_KEY)
