@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from typing import Optional
+import hashlib
 
 from jose import jwt
 from passlib.context import CryptContext
@@ -7,22 +8,27 @@ from cryptography.fernet import Fernet
 
 from app.core.config import settings
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-fernet = Fernet(settings.ENCRYPTION_KEY)
+pwd_context = CryptContext(
+    schemes=["bcrypt"],
+    deprecated="auto"
+)
 
-ALGORITHM = "HS256"
-
-
+def _prehash(password: str) -> str:
+    """
+    Pre-hash password to avoid bcrypt 72-byte limitation
+    """
+    return hashlib.sha256(password.encode()).hexdigest()
 
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
-
+    return pwd_context.hash(_prehash(password))
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+    return pwd_context.verify(_prehash(plain_password), hashed_password)
 
 
+
+ALGORITHM = "HS256"
 
 def create_access_token(
     data: dict,
@@ -48,9 +54,10 @@ def create_access_token(
 
 
 
+fernet = Fernet(settings.ENCRYPTION_KEY)
+
 def encrypt_value(value: str) -> str:
     return fernet.encrypt(value.encode()).decode()
-
 
 def decrypt_value(value: str) -> str:
     return fernet.decrypt(value.encode()).decode()
