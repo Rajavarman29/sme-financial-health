@@ -56,8 +56,16 @@ def create_access_token(
 
 fernet = Fernet(settings.ENCRYPTION_KEY)
 
-def encrypt_value(value: str) -> str:
-    return fernet.encrypt(value.encode()).decode()
 
-def decrypt_value(value: str) -> str:
-    return fernet.decrypt(value.encode()).decode()
+def encrypt_value(value: str) -> bytes:
+    """
+    Encrypt a string value and return raw bytes suitable for BYTEA columns.
+    """
+    return fernet.encrypt(value.encode())
+
+
+def decrypt_value(value: bytes) -> str:
+    """
+    Decrypt raw BYTEA bytes from the database back into a string.
+    """
+    return fernet.decrypt(value).decode()
