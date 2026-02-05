@@ -1,24 +1,29 @@
-import pandas as pd
+from sqlalchemy.orm import Session
+from uuid import UUID
+from app.models import Revenue, Expense
 
 
-def calculate_monthly_totals(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Groups by month and sums amounts.
-    """
-    if df.empty:
-        return pd.DataFrame(columns=["month", "total"])
-
-    df["date"] = pd.to_datetime(df["date"])
-    df["month"] = df["date"].dt.to_period("M").astype(str)
-
-    return (
-        df.groupby("month")["amount"]
-        .sum()
-        .reset_index(name="total")
-    )
+def get_financial_metrics(db: Session, user_id: str):
 
 
-def calculate_net_cash_flow(revenue_df: pd.DataFrame, expense_df: pd.DataFrame) -> float:
-    total_revenue = revenue_df["amount"].sum() if not revenue_df.empty else 0.0
-    total_expenses = expense_df["amount"].sum() if not expense_df.empty else 0.0
-    return total_revenue - total_expenses
+    
+    try:
+        user_uuid = UUID(user_id)
+    except ValueError:
+        raise ValueError("Invalid user_id format")
+
+    
+    revenues = db.query(Revenue).filter(Revenue.user_id == user_uuid).all()
+    expenses = db.query(Expense).filter(Expense.user_id == user_uuid).all()
+
+    
+    monthly_revenue = sum(r.amount for r in revenues)
+    monthly_expenses = sum(e.amount for e in expenses)
+
+    net_cashflow = monthly_revenue - monthly_expenses
+
+    return {
+        "monthly_revenue": float(monthly_revenue),
+        "monthly_expenses": float(monthly_expenses),
+        "net_cashflow": float(net_cashflow),
+    }
