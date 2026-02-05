@@ -7,5 +7,5 @@ router = APIRouter(prefix="/metrics", tags=["metrics"])
 
 
 @router.get("/")
-def get_metrics(user_id: str, db: Session = Depends(get_db)):
+def metrics(user_id: str, db: Session = Depends(get_db)):
     return get_financial_metrics(db, user_id)
